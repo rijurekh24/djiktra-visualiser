@@ -1,41 +1,59 @@
 import React, { useState, useEffect, useRef } from "react";
 import { dijkstra } from "./Graph";
-import { generateDirections } from "./directions";
 
 const graph = {
-  A: { B: 2, C: 4 },
-  B: { A: 2, C: 1, D: 7 },
-  C: { A: 4, B: 1, E: 3 },
-  D: { B: 7, E: 2 },
-  E: { C: 3, D: 2 },
+  A: [
+    { node: "B", distance: 2 },
+    { node: "F", distance: 2 },
+  ],
+  B: [
+    { node: "A", distance: 2 },
+    { node: "C", distance: 2 },
+    { node: "G", distance: 1 },
+  ],
+  C: [
+    { node: "B", distance: 2 },
+    { node: "E", distance: 3 },
+    { node: "F", distance: 2 },
+  ],
+  D: [
+    { node: "E", distance: 2 },
+    { node: "G", distance: 2 },
+  ],
+  E: [
+    { node: "C", distance: 3 },
+    { node: "D", distance: 2 },
+  ],
+  F: [
+    { node: "A", distance: 2 },
+    { node: "C", distance: 2 },
+  ],
+  G: [
+    { node: "B", distance: 1 },
+    { node: "D", distance: 2 },
+  ],
 };
 
 const nodes = {
   A: { x: 50, y: 50 },
   B: { x: 150, y: 50 },
   C: { x: 150, y: 150 },
-  D: { x: 250, y: 50 },
-  E: { x: 250, y: 150 },
+  D: { x: 350, y: 50 },
+  E: { x: 350, y: 150 },
+  F: { x: 50, y: 150 },
+  G: { x: 200, y: 50 },
 };
 
 const DijkstraVisualization = () => {
   const [steps, setSteps] = useState([]);
   const [currentStep, setCurrentStep] = useState(0);
   const [distance, setDistance] = useState(0);
-  const [directions, setDirections] = useState([]);
   const animationFrameId = useRef(null);
-  const initialOrientation = "north";
 
   useEffect(() => {
-    const result = dijkstra(graph, "A", "E");
+    const result = dijkstra(graph, "A", "D");
     setSteps(result.steps);
     setDistance(result.distance);
-    setDirections(
-      generateDirections(
-        result.steps[result.steps.length - 1],
-        initialOrientation
-      )
-    );
 
     let stepIndex = 0;
 
@@ -57,28 +75,28 @@ const DijkstraVisualization = () => {
   const renderEdges = () => {
     const edges = [];
     for (let node in graph) {
-      for (let neighbor in graph[node]) {
+      graph[node].forEach((neighbor) => {
         edges.push(
-          <g key={`${node}-${neighbor}`}>
+          <g key={`${node}-${neighbor.node}`}>
             <line
               x1={nodes[node].x}
               y1={nodes[node].y}
-              x2={nodes[neighbor].x}
-              y2={nodes[neighbor].y}
+              x2={nodes[neighbor.node].x}
+              y2={nodes[neighbor.node].y}
               stroke="gray"
               strokeWidth="2"
             />
             <text
-              x={(nodes[node].x + nodes[neighbor].x) / 2}
-              y={(nodes[node].y + nodes[neighbor].y) / 2}
+              x={(nodes[node].x + nodes[neighbor.node].x) / 2}
+              y={(nodes[node].y + nodes[neighbor.node].y) / 2}
               fill="black"
               fontSize="12"
             >
-              {graph[node][neighbor]}
+              {neighbor.distance}
             </text>
           </g>
         );
-      }
+      });
     }
     return edges;
   };
@@ -141,12 +159,7 @@ const DijkstraVisualization = () => {
           Current Path:{" "}
           {steps[currentStep] ? steps[currentStep].join(" -> ") : ""}
         </h2>
-        <h3>Directions:</h3>
-        <ul>
-          {directions.map((dir, idx) => (
-            <li key={idx}>{dir}</li>
-          ))}
-        </ul>
+        <h3>Distance: {distance}</h3>
       </div>
     </div>
   );

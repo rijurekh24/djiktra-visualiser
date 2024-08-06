@@ -1,85 +1,48 @@
-class PriorityQueue {
-  constructor() {
-    this.items = [];
-  }
-
-  enqueue(element, priority) {
-    let queueElement = { element, priority };
-    let added = false;
-
-    for (let i = 0; i < this.items.length; i++) {
-      if (this.items[i].priority > queueElement.priority) {
-        this.items.splice(i, 0, queueElement);
-        added = true;
-        break;
-      }
-    }
-
-    if (!added) {
-      this.items.push(queueElement);
-    }
-  }
-
-  dequeue() {
-    return this.items.shift();
-  }
-
-  isEmpty() {
-    return this.items.length === 0;
-  }
-}
-
+// Graph.js
 export function dijkstra(graph, startNode, endNode) {
-  let distances = {};
-  let prev = {};
-  let pq = new PriorityQueue();
-  let steps = [];
+  const distances = {};
+  const visited = {};
+  const previous = {};
+  const queue = [];
 
   for (let node in graph) {
-    if (node === startNode) {
-      distances[node] = 0;
-      pq.enqueue(node, 0);
-    } else {
-      distances[node] = Infinity;
-      pq.enqueue(node, Infinity);
-    }
-    prev[node] = null;
+    distances[node] = Infinity;
+    previous[node] = null;
+    queue.push(node);
   }
 
-  while (!pq.isEmpty()) {
-    let minNode = pq.dequeue().element;
+  distances[startNode] = 0;
 
-    if (minNode === endNode) {
-      let path = [];
-      let currentNode = endNode;
+  while (queue.length > 0) {
+    const currentNode = queue.reduce(
+      (minNode, node) =>
+        distances[node] < distances[minNode] ? node : minNode,
+      queue[0]
+    );
 
-      while (currentNode) {
-        path.unshift(currentNode);
-        currentNode = prev[currentNode];
+    if (currentNode === endNode) break;
+
+    queue.splice(queue.indexOf(currentNode), 1);
+    visited[currentNode] = true;
+
+    graph[currentNode].forEach((neighbor) => {
+      if (!visited[neighbor.node]) {
+        const newDistance = distances[currentNode] + neighbor.distance;
+        if (newDistance < distances[neighbor.node]) {
+          distances[neighbor.node] = newDistance;
+          previous[neighbor.node] = currentNode;
+        }
       }
-
-      steps.push([...path]);
-      return { distance: distances[endNode], steps };
-    }
-
-    for (let neighbor in graph[minNode]) {
-      let alt = distances[minNode] + graph[minNode][neighbor];
-
-      if (alt < distances[neighbor]) {
-        distances[neighbor] = alt;
-        prev[neighbor] = minNode;
-        pq.enqueue(neighbor, alt);
-      }
-    }
-
-    let currentPath = [];
-    let currentNode = minNode;
-    while (currentNode) {
-      currentPath.unshift(currentNode);
-      currentNode = prev[currentNode];
-    }
-    steps.push([...currentPath]);
+    });
   }
 
-  return { distance: Infinity, steps };
+  const path = [];
+  let step = endNode;
+  while (previous[step]) {
+    path.unshift(step);
+    step = previous[step];
+  }
+  path.unshift(startNode);
+
+  return { steps: [path], distance: distances[endNode] };
 }
