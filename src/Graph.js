@@ -33,6 +33,7 @@ export function dijkstra(graph, startNode, endNode) {
   let distances = {};
   let prev = {};
   let pq = new PriorityQueue();
+  let steps = [];
 
   for (let node in graph) {
     if (node === startNode) {
@@ -57,7 +58,8 @@ export function dijkstra(graph, startNode, endNode) {
         currentNode = prev[currentNode];
       }
 
-      return { distance: distances[endNode], path };
+      steps.push([...path]);
+      return { distance: distances[endNode], steps };
     }
 
     for (let neighbor in graph[minNode]) {
@@ -69,7 +71,15 @@ export function dijkstra(graph, startNode, endNode) {
         pq.enqueue(neighbor, alt);
       }
     }
+
+    let currentPath = [];
+    let currentNode = minNode;
+    while (currentNode) {
+      currentPath.unshift(currentNode);
+      currentNode = prev[currentNode];
+    }
+    steps.push([...currentPath]);
   }
 
-  return { distance: Infinity, path: [] };
+  return { distance: Infinity, steps };
 }

@@ -1,34 +1,57 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { dijkstra } from "./Graph";
+import { generateDirections } from "./directions";
 
 const graph = {
-  A: { B: 2, F: 1 },
-  B: { A: 2, C: 1, G: 1 },
-  C: { B: 1, E: 3, F: 2 },
-  D: { G: 2, E: 1 },
-  E: { C: 3, D: 1 },
-  F: { A: 1, C: 2 },
-  G: { B: 1, D: 2 },
+  A: { B: 2, C: 4 },
+  B: { A: 2, C: 1, D: 7 },
+  C: { A: 4, B: 1, E: 3 },
+  D: { B: 7, E: 2 },
+  E: { C: 3, D: 2 },
 };
 
 const nodes = {
   A: { x: 50, y: 50 },
   B: { x: 150, y: 50 },
   C: { x: 150, y: 150 },
-  D: { x: 350, y: 50 },
-  E: { x: 350, y: 150 },
-  F: { x: 50, y: 150 },
-  G: { x: 200, y: 50 },
+  D: { x: 250, y: 50 },
+  E: { x: 250, y: 150 },
 };
 
 const DijkstraVisualization = () => {
-  const [path, setPath] = useState([]);
+  const [steps, setSteps] = useState([]);
+  const [currentStep, setCurrentStep] = useState(0);
   const [distance, setDistance] = useState(0);
+  const [directions, setDirections] = useState([]);
+  const animationFrameId = useRef(null);
+  const initialOrientation = "north";
 
   useEffect(() => {
-    const result = dijkstra(graph, "G", "F");
-    setPath(result.path);
+    const result = dijkstra(graph, "A", "E");
+    setSteps(result.steps);
     setDistance(result.distance);
+    setDirections(
+      generateDirections(
+        result.steps[result.steps.length - 1],
+        initialOrientation
+      )
+    );
+
+    let stepIndex = 0;
+
+    const animate = () => {
+      stepIndex++;
+      if (stepIndex < result.steps.length) {
+        setCurrentStep(stepIndex);
+        animationFrameId.current = requestAnimationFrame(animate);
+      } else {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+    };
+
+    animationFrameId.current = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animationFrameId.current);
   }, []);
 
   const renderEdges = () => {
@@ -67,7 +90,11 @@ const DijkstraVisualization = () => {
           cx={nodes[node].x}
           cy={nodes[node].y}
           r="15"
-          fill={path.includes(node) ? "green" : "blue"}
+          fill={
+            steps[currentStep] && steps[currentStep].includes(node)
+              ? "green"
+              : "blue"
+          }
         />
         <text
           x={nodes[node].x}
@@ -84,17 +111,18 @@ const DijkstraVisualization = () => {
   };
 
   const renderPath = () => {
+    if (!steps[currentStep]) return null;
     const pathEdges = [];
-    for (let i = 0; i < path.length - 1; i++) {
+    for (let i = 0; i < steps[currentStep].length - 1; i++) {
       pathEdges.push(
         <line
-          key={`path-${path[i]}-${path[i + 1]}`}
-          x1={nodes[path[i]].x}
-          y1={nodes[path[i]].y}
-          x2={nodes[path[i + 1]].x}
-          y2={nodes[path[i + 1]].y}
+          key={`path-${steps[currentStep][i]}-${steps[currentStep][i + 1]}`}
+          x1={nodes[steps[currentStep][i]].x}
+          y1={nodes[steps[currentStep][i]].y}
+          x2={nodes[steps[currentStep][i + 1]].x}
+          y2={nodes[steps[currentStep][i + 1]].y}
           stroke="red"
-          strokeWidth="2"
+          strokeWidth="4"
         />
       );
     }
@@ -108,6 +136,18 @@ const DijkstraVisualization = () => {
         {renderPath()}
         {renderNodes()}
       </svg>
+      <div>
+        <h2>
+          Current Path:{" "}
+          {steps[currentStep] ? steps[currentStep].join(" -> ") : ""}
+        </h2>
+        <h3>Directions:</h3>
+        <ul>
+          {directions.map((dir, idx) => (
+            <li key={idx}>{dir}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 };
