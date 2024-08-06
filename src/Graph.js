@@ -1,4 +1,3 @@
-// Graph.js
 export function dijkstra(graph, startNode, endNode) {
   const distances = {};
   const visited = {};

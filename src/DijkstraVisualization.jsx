@@ -51,7 +51,7 @@ const DijkstraVisualization = () => {
   const animationFrameId = useRef(null);
 
   useEffect(() => {
-    const result = dijkstra(graph, "A", "D");
+    const result = dijkstra(graph, "A", "E");
     setSteps(result.steps);
     setDistance(result.distance);
 
